@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Show drawn polygon area</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.0.0/mapbox-gl.js"></script>
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.0.0/mapbox-gl.css" rel="stylesheet" />
+<style>
+	body { margin: 0; padding: 0; }
+	#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<style>
+    .calculation-box {
+        height: 400px;
+        width: 350px;
+        position: absolute;
+        bottom: 40px;
+        left: 10px;
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 15px;
+        text-align: left;
+    }
+
+    p {
+        font-family: 'Open Sans';
+        margin: 0;
+        font-size: 13px;
+    }
+</style>
+<script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.2.0/mapbox-gl-draw.js"></script>
+<link
+    rel="stylesheet"
+    href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.2.0/mapbox-gl-draw.css"
+    type="text/css"
+/>
+<div id="map"></div>
+<div class="calculation-box">
+        <form id='calculated-area'>
+            <p>Polygon 1</p><textarea id = '1' class='coord' rows="4" cols="40">[[[-96.4443125000003,32.19058256755784],[-83.87595312500027,32.78367224518996],[-79.39353125000017,22.040941669516997],[-82.29392187500028,23.015132471271357],[-88.79782812500027,20.402404486615723],[-91.78610937500008,16.821472806685392],[-98.11423437499995,17.493302771499913],[-100.4872812500001,26.839854223017255],[-96.4443125000003,32.19058256755784]]]</textarea>
+            <p>Polygon 2</p><textarea id = '2' class='coord' rows="4" cols="40">[[[-68.40720312500046,45.47253560303727],[-83.87595312500027,32.78367224518996],[-81.63474218750041,27.543442413696894],[-80.51413671875028,24.822736049881158],[-78.60251562500036,25.10722695170027],[-66.47360937500063,44.4615342153469],[-68.40720312500046,45.47253560303727]]]</textarea>
+            <p>Polygon 3</p><textarea id = '3' class='coord' rows="4" cols="40"></textarea>
+            <p>Polygon 4</p><textarea id = '4' class='coord' rows="4" cols="40"></textarea>
+        </form>
+        <input class='btn' type='button' value = 'Update'>
+</div>
+
+<script>
+
+    // LOAD MAPBOX
+
+	mapboxgl.accessToken = 'pk.eyJ1IjoicGllcnJlc2hpcGZpeCIsImEiOiJjazhvam92OTQwM2IyM2VvZ3RpNDlqa216In0.wsAexPRawHcmfMRydsewlw';
+    var map = new mapboxgl.Map({
+        container: 'map', // container id
+        style: 'mapbox://styles/mapbox/light-v10', //hosted style id
+        center: [-45.874, 42.76], // starting position
+        zoom: 1 // starting zoom
+    });
+
+    var draw = new MapboxDraw({
+        displayControlsDefault: false,
+        controls: {
+            polygon: true,
+            trash: true
+        }
+    });
+    map.addControl(draw);
+
+
+
+    // DRAW AND UPDATE COORDINATES BOX
+
+    map.on('draw.create', updateArea);
+    map.on('draw.delete', updateArea);
+    map.on('draw.update', updateArea);
+    map.on('draw.selectionchange', highlight);
+
+    function updateArea(e) {
+        var data = draw.getAll();
+        var answer = document.getElementById('calculated-area');
+        var content = '';
+        data.features.forEach(function(obj) {
+            content += '<p>Polygon ' + obj.id + '</p>' +
+                        '<textarea id = "'+ obj.id + '" class="coord" rows="4" cols="40">' +
+                        JSON.stringify(obj.geometry.coordinates) +
+                        "</textarea><br>"
+                        });
+        answer.innerHTML = content
+    }
+
+    function highlight(e) {
+        if (e.features.length > 0) {
+            var id = e.features[0].id;
+            document.getElementById(id).style.color = 'CornflowerBlue';
+        } else {
+            var elems = document.querySelectorAll('.coord');
+            elems.forEach(function(obj) {
+                obj.style.color = 'black';
+            })
+
+        }
+    }
+
+    // UPLOAD A POLYGON FROM COORDINATES BOX
+
+    var feature = {
+        id: "1",
+        title: '',
+        type: 'Feature',
+        properties: {},
+        geometry: { type: 'Polygon', coordinates:[]}
+    };
+
+    var btn = document.querySelector('input');
+    btn.addEventListener('click', updateBtn);
+
+    function updateBtn() {
+        document.querySelectorAll('.coord').forEach(function(obj) {
+                feature.geometry.coordinates = JSON.parse(obj.value);
+                feature.id = obj.id;
+                feature.title = 'Polygon';
+                var featureIds = draw.add(feature);
+                            });
+    }
+
+
+</script>
+
+</body>
+</html>
