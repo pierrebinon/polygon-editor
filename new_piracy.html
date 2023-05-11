@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Show drawn polygon area</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.0.0/mapbox-gl.js"></script>
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.0.0/mapbox-gl.css" rel="stylesheet" />
+<style>
+	body { margin: 0; padding: 0; }
+	#map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+<body>
+<style>
+    .calculation-box {
+        height: 400px;
+        width: 350px;
+        position: absolute;
+        bottom: 40px;
+        left: 10px;
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 15px;
+        text-align: left;
+    }
+
+    p {
+        font-family: 'Open Sans';
+        margin: 0;
+        font-size: 13px;
+    }
+</style>
+<script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.2.0/mapbox-gl-draw.js"></script>
+<link
+    rel="stylesheet"
+    href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.2.0/mapbox-gl-draw.css"
+    type="text/css"
+/>
+<div id="map"></div>
+<div class="calculation-box">
+<input class='btn' type='button' value = 'Update'>
+        <form id='calculated-area'>
+<textarea id = '55' class='coord' rows='1' cols='40'>[[[53.108333,16.641666999999998],[53.83333300000001,14.916667000000004],[60.24999999999999,10.799999999999997],[48.75,-6.75],[41.566666999999995,-1.6666669999999897],[42.1307304853035,-0.7269182288309253],[42.810939964848416,-0.02894396457892867],[43.79109477562807,1.0225086184502317],[44.96482624348016,1.976889164064687],[46.03244579651869,2.58445254028841],[47.23485851635439,3.7388800231602772],[48.50361115791,5.4477877290308925],[49.0636168880057,6.584442038080056],[49.571304859201575,7.502672706359775],[50.724224622111876,9.543105733913578],[50.847718136169334,10.33485136410522],[51.02257549442422,10.448357398224104],[51.11059946701482,11.084212499068457],[51.01529308198289,11.268057676700266],[51.226284720635846,11.8160334373744],[50.65615494432086,11.908068852991335],[50.55818170258638,11.67075176836012],[49.98233915681442,11.440301622425196],[48.99346666339309,11.202523779296698],[48.56748066507333,11.27815015718474],[48.176052638661844,11.10292694747163],[47.66274876675985,11.044001408596941],[47.403889919386245,11.107490953120731],[46.49833798808916,10.590318766341198],[45.78661236816359,10.771947531267429],[45.01945591247477,10.354205540126088],[44.26117470181066,10.336114911884593],[43.73032842529841,10.781911890397737],[43.347297710831356,11.33576597103476],[43.07293152133727,11.5421170130126],[42.67187959419334,11.425655336785724],[42.490535854401486,11.472065396094237],[42.5165120162975,11.623801330352038],[43.378573861669196,12.075925849449732],[43.03305032410964,12.782271202171259],[42.80847636705465,12.75600195817782],[42.566658917837,13.108977060037347],[42.35938292746499,13.150526164844237],[42.24745134892268,13.43126285237362],[41.901949261098736,13.802435411017186],[41.61977728102207,13.939249724921083],[41.451435811280305,14.203882736912064],[41.173938335787,14.536141908475201],[40.763218771274296,14.664954052502935],[39.99869572777527,14.993601841251959],[40.369969634036295,14.999999999998508],[40.54584327784687,14.999999999998508],[40.89759056546626,14.999999999998508],[41.60108514070501,14.999999999998508],[43.008074291184556,15],[43.09827398057101,14.306301279562732],[43.2818410677005,13.882523771499521],[43.31602031844457,13.294470076168338],[43.5556078442186,12.759634998518933],[44.12908080416557,12.678268508853947],[44.57183940728174,12.851882587547195],[44.85980526797877,12.871290062457035],[45.65981874394623,13.455505520972267],[46.70355755383113,13.4836759367615],[47.350961698997,13.685484332155497],[47.998365844158485,14.149462437838523],[48.65310991469491,14.090903708125339],[48.93030674471106,14.344890149774372],[48.91235530854135,14.552883570617851],[52.164891873136725,15.644832472182316],[52.067327914824006,15.913443280115516],[52.28452392821268,16.44961603395339],[53.108333,16.641666999999998]]]</textarea>
+</div>
+
+<script>
+
+    // LOAD MAPBOX
+
+	mapboxgl.accessToken = 'pk.eyJ1IjoicGllcnJlc2hpcGZpeCIsImEiOiJjazhvam92OTQwM2IyM2VvZ3RpNDlqa216In0.wsAexPRawHcmfMRydsewlw';
+    var map = new mapboxgl.Map({
+        container: 'map', // container id
+        style: 'mapbox://styles/mapbox/light-v10', //hosted style id
+        center: [-45.874, 42.76], // starting position
+        zoom: 1 // starting zoom
+    });
+
+    var draw = new MapboxDraw({
+        displayControlsDefault: false,
+        controls: {
+            polygon: true,
+            trash: true
+        }
+    });
+    map.addControl(draw);
+
+
+
+    // DRAW AND UPDATE COORDINATES BOX
+
+    map.on('draw.create', updateArea);
+    map.on('draw.delete', updateArea);
+    map.on('draw.update', updateArea);
+    map.on('draw.selectionchange', highlight);
+
+    function updateArea(e) {
+        var data = draw.getAll();
+        var answer = document.getElementById('calculated-area');
+        var content = '';
+        data.features.forEach(function(obj) {
+            content += '<p>Polygon ' + obj.id + '</p>' +
+                        '<textarea id = "'+ obj.id + '" class="coord" rows="4" cols="40">' +
+                        JSON.stringify(obj.geometry.coordinates) +
+                        "</textarea><br>"
+                        });
+        answer.innerHTML = content
+    }
+
+    function highlight(e) {
+        if (e.features.length > 0) {
+            var id = e.features[0].id;
+            document.getElementById(id).style.color = 'CornflowerBlue';
+        } else {
+            var elems = document.querySelectorAll('.coord');
+            elems.forEach(function(obj) {
+                obj.style.color = 'black';
+            })
+
+        }
+    }
+
+    // UPLOAD A POLYGON FROM COORDINATES BOX
+
+    var feature = {
+        id: "1",
+        title: '',
+        type: 'Feature',
+        properties: {},
+        geometry: { type: 'Polygon', coordinates:[]}
+    };
+
+    var btn = document.querySelector('input');
+    btn.addEventListener('click', updateBtn);
+
+    function updateBtn() {
+        document.querySelectorAll('.coord').forEach(function(obj) {
+                feature.geometry.coordinates = JSON.parse(obj.value);
+                feature.id = obj.id;
+                feature.title = 'Polygon';
+                var featureIds = draw.add(feature);
+                            });
+    }
+
+
+</script>
+
+</body>
+</html>
